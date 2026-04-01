@@ -43,7 +43,7 @@ pub async fn post_exec(
 
     state.metrics.inc_execs();
     let start = std::time::Instant::now();
-    let timeout_secs = req.timeout_secs.unwrap_or(120);
+    let timeout_secs = req.timeout_secs.unwrap_or(120).min(3600);
 
     let mut cmd = if cfg!(windows) {
         let mut c = Command::new("cmd");

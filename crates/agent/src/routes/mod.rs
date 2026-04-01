@@ -42,6 +42,7 @@ pub struct AppState {
 
 pub fn build_router(state: AppState) -> Router {
     let token = state.config.token.clone();
+    let config_for_auth = state.config.clone();
 
     Router::new()
         // Public routes
@@ -122,14 +123,11 @@ pub fn build_router(state: AppState) -> Router {
         .route("/ui/screenshot", get(ui::get_ui_screenshot))
         .route("/ui/describe", get(ui::get_ui_describe))
         .route("/ui/ocr", get(ui::get_ui_ocr))
-        .route_layer(middleware::from_fn_with_state(
-            token,
-            |axum::extract::State(token): axum::extract::State<String>,
-             req: axum::http::Request<axum::body::Body>,
-             next: middleware::Next| async move {
-                crate::auth::auth_middleware(token, req, next).await
-            },
-        ))
+        .route_layer(middleware::from_fn(move |req, next| {
+            let token = token.clone();
+            let allowed_ips = config_for_auth.get_hot().allowed_ips.clone();
+            async move { crate::auth::auth_middleware(token, allowed_ips, req, next).await }
+        }))
         .with_state(state)
 }
 

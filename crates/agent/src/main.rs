@@ -183,9 +183,12 @@ async fn run_server(
     info!(%addr, "Listening");
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    axum::serve(listener, router)
-        .with_graceful_shutdown(shutdown)
-        .await?;
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown)
+    .await?;
 
     info!("Agent stopped cleanly");
     Ok(())
