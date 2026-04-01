@@ -90,56 +90,93 @@ bash scripts/build-dist.sh
 
 ## Quick Start
 
-### 1. Build
+### 1. Get the binaries
+
+**Option A — pre-built (recommended):**
+
+Download from [Releases](https://github.com/chat812/remote-mcp/releases/latest) or copy from the `dist/` folder in this repo.
+
+**Option B — build from source:**
 
 ```bash
 # Requires Rust 1.70+
-git clone <repo>
-cd remote-exec-mcp
+git clone https://github.com/chat812/remote-mcp.git
+cd remote-mcp
 cargo build --release
+# Binaries: target/release/mcp-server  target/release/agent
 ```
 
-Binaries land at `target/release/mcp-server` and `target/release/agent`.
-
-### 2. Register with Claude Code
+### 2. Register the MCP server with Claude Code
 
 ```bash
-mcp-server init
-# Creates ~/.config/remote-exec-mcp/
-# Runs: claude mcp add remote-exec mcp-server
+# Run once on the machine where Claude Code runs
+claude mcp add remote-exec /path/to/mcp-server
 ```
 
-### 3. Install the agent on a remote machine
+### 3. Set up the agent on each remote machine
 
-**Linux / macOS:**
+**Linux / macOS — one-liner installer:**
 ```bash
-curl -fsSL https://.../install-agent.sh | bash -s -- --port 8765
+curl -fsSL https://github.com/chat812/remote-mcp/releases/latest/download/install-agent.sh \
+  | bash -s -- --port 8765
 ```
 
-**Windows:**
+The script downloads the binary, generates a token, writes `/etc/remote-exec-agent/config.json`, and installs a systemd service. At the end it prints the connection string.
+
+**Linux / macOS — manual (or air-gapped):**
+```bash
+# Copy the binary
+scp dist/agent-linux-x86_64 root@10.0.0.5:/usr/local/bin/remote-exec-agent
+ssh root@10.0.0.5 'chmod +x /usr/local/bin/remote-exec-agent'
+
+# Run agent init to generate config and get the connection string
+ssh root@10.0.0.5 '/usr/local/bin/remote-exec-agent init --port 8765'
+
+# Start the agent (reads config automatically)
+ssh root@10.0.0.5 '/usr/local/bin/remote-exec-agent'
+```
+
+**Windows — PowerShell installer (run as Administrator):**
 ```powershell
+# Copy agent-windows-x86_64.exe to the target machine first, then:
 .\scripts\install-agent.ps1 -Port 8765
 ```
 
-Both scripts:
-1. Download or use the pre-built agent binary
-2. Generate a secure random token
-3. Write the config file
-4. Install and start a systemd service (Linux) or Windows Service
-5. Print the connection string
+**Windows — manual:**
+```powershell
+# Run once to generate config.json next to the binary and print machine_add command
+.\agent.exe init --port 8765 --label "my-windows-box"
+
+# Start the agent (picks up config.json automatically every time after)
+.\agent.exe
+```
+
+`agent init` output looks like:
+```
+Config written to: C:\path\to\agent.json
+
+Add this machine in Claude:
+
+  machine_add label="my-windows-box" host="192.168.1.42" port=8765 transport="agent" agent_url="http://192.168.1.42:8765" agent_token="<64-char token>"
+
+Start the agent:
+
+  ./agent
+```
 
 ### 4. Register the machine with Claude
 
-```
-machine_connect remcp://root@10.0.0.5:8765?token=<token>&via=agent+ssh
-```
-
-Or register manually:
+Paste the URI printed by the install script or `agent init` directly into Claude:
 
 ```
-machine_add label="prod-web" host="10.0.0.5" transport="agent+ssh"
+machine_connect uri="remcp://192.168.1.42:8765?token=<token>&label=my-box"
+```
+
+Or use the verbose form:
+
+```
+machine_add label="prod-web" host="10.0.0.5" port=8765 transport="agent"
             agent_url="http://10.0.0.5:8765" agent_token="<token>"
-            ssh_user="root" ssh_key_path="~/.ssh/id_rsa"
 ```
 
 ---
@@ -162,7 +199,8 @@ All tools are available in Claude conversations once a machine is registered.
 
 | Tool | Description |
 |---|---|
-| `machine_add` | Register a machine (SSH or agent). Immediately fetches capabilities if agent_url provided. |
+| `machine_connect` | Register a machine from a `remcp://` URI — paste the output of `agent init` or the install script directly. |
+| `machine_add` | Register a machine with explicit parameters (SSH or agent). |
 | `machine_list` | Table of all registered machines: id, label, host:port, transport, status, OS. |
 | `machine_remove` | Delete a machine from the registry. |
 | `machine_test` | Ping the machine, measure round-trip latency, refresh capabilities, display metrics. |
