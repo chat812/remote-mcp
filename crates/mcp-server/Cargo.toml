@@ -1,0 +1,28 @@
+[package]
+name = "mcp-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rmcp = { version = "0.1", features = ["server", "transport-io"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+russh = "0.44"
+russh-sftp = "2"
+reqwest = { version = "0.12", features = ["json", "multipart", "stream", "rustls-tls"], default-features = false }
+tracing-appender = "0.2"
+dirs = "5"
+clap = { version = "4", features = ["derive"] }
+thiserror = "1"
+dashmap = "5"
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+async-trait = "0.1"

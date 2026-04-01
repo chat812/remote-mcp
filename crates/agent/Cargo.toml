@@ -1,0 +1,54 @@
+[package]
+name = "agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7", features = ["multipart"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace", "timeout"] }
+clap = { version = "4", features = ["derive", "env"] }
+sysinfo = "0.30"
+portable-pty = "0.8"
+strip-ansi-escapes = "0.2"
+tokio-util = { version = "0.7", features = ["io"] }
+futures = "0.3"
+which = "6"
+bytes = "1"
+subtle = "2"
+dashmap = "5"
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+async-trait = "0.1"
+axum-extra = { version = "0.9", features = ["typed-header"] }
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.28", features = ["signal", "process"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.6"
+enigo = "0.2"
+uiautomation = "0.24"
+screenshots = "0.8"
+base64 = "0.22"
+windows = { version = "0.62", features = [
+    "Media_Ocr",
+    "Graphics_Imaging",
+    "Storage_Streams",
+    "Globalization",
+    "Foundation",
+    "Foundation_Collections",
+] }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
+tempfile = "3"
